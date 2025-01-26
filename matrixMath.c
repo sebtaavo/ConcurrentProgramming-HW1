@@ -185,7 +185,7 @@ void *Worker(void *arg) { /*----------------------------------------------------
         break;
     }
     row = nextRow;
-    printf("Worker %d picked up row %d of the matrix.\n", myid, row);
+    //printf("Worker %d picked up row %d of the matrix.\n", myid, row);  //enable this to track how the threads pick up work from the bag
     nextRow++;
     pthread_mutex_unlock(&barrierNextRow);
     for (j = 0; j < size; j++) {
