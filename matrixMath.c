@@ -58,7 +58,7 @@ double start_time, end_time; /* start and end times */
 int size, stripSize;  /* assume size is multiple of numWorkers */
 int sums[MAXWORKERS]; /* partial sums */
 
-/*New code for question a), for finding min and max and their positions. We lock the critical section. Written by Sebastian Taavo Ek*/
+/*New code for question a), for finding min and max and their positions. We lock the critical section*/
 pthread_mutex_t barrierMin;  /* mutex lock for the barrier */
 pthread_mutex_t barrierMax;  /* mutex lock for the barrier */
 pthread_mutex_t barrierSum;  /* mutex lock for the barrier */
@@ -125,12 +125,12 @@ int main(int argc, char *argv[]) {
   pthread_mutex_init(&barrier, NULL);
   pthread_cond_init(&go, NULL);
 
-  /*New code for a). Written by Sebastian Taavo Ek*/
+  /*New code for a)*/
   pthread_mutex_init(&barrierMin, NULL);
   pthread_mutex_init(&barrierMax, NULL);
-  /*New code for b). Written by Sebastian Taavo Ek*/
+  /*New code for b)*/
   pthread_mutex_init(&barrierSum, NULL);
-  /*New code for c). Written by Sebastian Taavo Ek*/
+  /*New code for c)*/
   pthread_mutex_init(&barrierNextRow, NULL);
   pthread_mutex_init(&barrierRowsDone, NULL);
 
