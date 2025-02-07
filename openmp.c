@@ -3,6 +3,9 @@
 #include <omp.h>
 #include <string.h>
 #include <sys/types.h>
+#include <stdbool.h>
+#include <time.h>
+#include <sys/time.h>
 
 #define INITIAL_SIZE 10  
 #define WORD_LENGTH 100  
@@ -11,7 +14,21 @@
 
 char **dictionaryInArray = NULL; 
 int capacity = INITIAL_SIZE;     
-int wordCount = 0;             
+int wordCount = 0;   
+
+/*read timer function from first exercise, given by KTH*/
+double read_timer() {
+    static bool initialized = false;
+    static struct timeval start;
+    struct timeval end;
+    if( !initialized )
+    {
+        gettimeofday( &start, NULL );
+        initialized = true;
+    }
+    gettimeofday( &end, NULL );
+    return (end.tv_sec - start.tv_sec) + 1.0e-6 * (end.tv_usec - start.tv_usec);
+}
 
 /*function to read dictionary file into dynamic array*/
 void read_file_into_array(FILE *file) {
@@ -70,7 +87,7 @@ int main(int argc, char *argv[]) {
 
     /*now we perform the parallel part*/
     double start_time, end_time;
-    start_time = omp_get_wtime();
+    start_time = read_timer();
     #pragma omp parallel
     {
         int id = omp_get_thread_num();
@@ -88,8 +105,8 @@ int main(int argc, char *argv[]) {
             free(reverseWord);
         }
     }
-    end_time = omp_get_wtime();
-    printf("Elapsed time: %d\n", end_time - start_time);
+    end_time = read_timer();
+    printf("Elapsed time: %f seconds \n", (end_time - start_time));
 
     fclose(output_file);
     printf("All done.\n");
