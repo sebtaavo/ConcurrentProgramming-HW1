@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
 
     /*load in the dictionary*/
     dictionaryInArray = malloc(capacity * sizeof(char *));
-    FILE *dictionary_file = fopen("words", "r"); /*options are words, dictionary2.txt and dictionary3.txt*/
+    FILE *dictionary_file = fopen("dictionary3.txt", "r"); /*options are words, dictionary2.txt and dictionary3.txt*/
     /*dictionary 3: 466k words, dictionary 2: 69k words, words: 25k*/
     FILE *output_file = fopen("palindromesOutput.txt", "w"); /*open the output file in write mode. we truncate old results each time the program is run*/
     read_file_into_array(dictionary_file);
