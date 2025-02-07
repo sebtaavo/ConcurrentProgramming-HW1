@@ -80,7 +80,8 @@ int main(int argc, char *argv[]) {
 
     /*load in the dictionary*/
     dictionaryInArray = malloc(capacity * sizeof(char *));
-    FILE *dictionary_file = fopen("dictionary2.txt", "r"); /*options are words, dictionary2.txt*/
+    FILE *dictionary_file = fopen("words", "r"); /*options are words, dictionary2.txt and dictionary3.txt*/
+    /*dictionary 3: 466k words, dictionary 2: 69k words, words: 25k*/
     FILE *output_file = fopen("palindromesOutput.txt", "w"); /*open the output file in write mode. we truncate old results each time the program is run*/
     read_file_into_array(dictionary_file);
     fclose(dictionary_file);
@@ -106,10 +107,12 @@ int main(int argc, char *argv[]) {
         }
     }
     end_time = read_timer();
-    printf("Elapsed time: %f seconds \n", (end_time - start_time));
-
-    fclose(output_file);
     printf("All done.\n");
+    printf("Elapsed time: %f seconds \n", (end_time - start_time));
+    printf("Number of words in dictionary: %d", wordCount);
+    fclose(output_file);
+
+    
 
     /*cleanup, free memory of each string on the heap*/
     for (int i = 0; i < wordCount; i++) {
