@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
 
     /*load in the dictionary*/
     dictionaryInArray = malloc(capacity * sizeof(char *));
-    FILE *dictionary_file = fopen("dictionary3.txt", "r"); /*options are words, dictionary2.txt and dictionary3.txt*/
+    FILE *dictionary_file = fopen(argv[2], "r"); /*options are words, dictionary2.txt and dictionary3.txt*/
     /*dictionary 3: 466k words, dictionary 2: 69k words, words: 25k*/
     FILE *output_file = fopen("palindromesOutput.txt", "w"); /*open the output file in write mode. we truncate old results each time the program is run*/
     read_file_into_array(dictionary_file);
@@ -99,26 +99,48 @@ int main(int argc, char *argv[]) {
         int id = omp_get_thread_num();
         char resultsBuffer[WORD_LENGTH * 2]; /*temp buffer for formatting the end result string to %s -> %s format*/
 
-    #pragma omp for
+        /*local results storage init, to avoid contention over a single results array within a mutex*/
+        char **results_local = malloc(INITIAL_SIZE * sizeof(char *));
+        int results_local_capacity = INITIAL_SIZE;
+        int results_local_count = 0;
+
+        #pragma omp for nowait /*we use nowait because each thread can report its subresult without having to wait for other threads to finish*/
         for(int i = 0; i < wordCount; i++){
             char *reverseWord = reverse_string(dictionaryInArray[i]);
             char **palindromeOrSemordnilaps = (char **)bsearch(&reverseWord, dictionaryInArray, wordCount, sizeof(char *), compare_strings);
             if(palindromeOrSemordnilaps){ /*this block is entered if the above function did not return NULL (result was found)*/
                 snprintf(resultsBuffer, sizeof(resultsBuffer), "%s -> %s", dictionaryInArray[i], *palindromeOrSemordnilaps); /*save %s -> %s as a string for pair to a buffer*/
-                #pragma omp critical
-            {
-                if (results_count >= results_capacity) { /*dynamically allocate more memory if our array is running out of space*/
-                    results_capacity *= 2;
-                    results = realloc(results, results_capacity * sizeof(char *));
-                }
-                results[results_count] = strdup(resultsBuffer);
-                results_count++;
-                printf("Thread %d found pair: %s -> %s\n", id, dictionaryInArray[i], *palindromeOrSemordnilaps);
+            
+            /*dynamically resize our local results array if it needs more space*/
+            if (results_local_count >= results_local_capacity) {
+                results_local_capacity *= 2;
+                results_local = realloc(results_local, results_local_capacity * sizeof(char *));
             }
+
+            results_local[results_local_count] = strdup(resultsBuffer);
+            results_local_count++;
             }
             free(reverseWord);
+        } /*end of for loop*/
+
+        /*once the for looping is done, we reach a critical section where we merge all the partial results!!*/
+        #pragma omp critical
+        {
+            /*resize the global results array if we need more space*/
+            if (results_count + results_local_count >= results_capacity) {
+                results_capacity = results_count + results_local_count + INITIAL_SIZE;
+                results = realloc(results, results_capacity * sizeof(char *));
+            }
+
+            /*copy the local results into the global results array*/
+            for (int j = 0; j < results_local_count; j++) {
+                results[results_count++] = results_local[j];
+            }
+            free(results_local);
         }
-    }
+    }/*end of parallelized section of the program*/
+
+
     end_time = read_timer();
     /*saving pairs to local file palindromesOutput.txt*/
     for (int i = 0; i < results_count; i++) {
@@ -131,8 +153,6 @@ int main(int argc, char *argv[]) {
     printf("Number of words in dictionary: %d\n", wordCount);
     printf("Number of palindromes/semordnilapses found: %d\n", results_count);
     fclose(output_file);
-
-    
 
     /*cleanup, free memory of each string on the heap*/
     for (int i = 0; i < wordCount; i++) {
