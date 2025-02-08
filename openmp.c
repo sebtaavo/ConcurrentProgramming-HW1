@@ -14,7 +14,7 @@
 
 char **dictionaryInArray = NULL; 
 int capacity = INITIAL_SIZE;     
-int wordCount = 0;   
+int wordCount = 0;
 
 /*read timer function from first exercise, given by KTH*/
 double read_timer() {
@@ -86,30 +86,50 @@ int main(int argc, char *argv[]) {
     read_file_into_array(dictionary_file);
     fclose(dictionary_file);
 
+    /*variables to store results in an array and keep track of our index*/
+    char **results = malloc(INITIAL_SIZE * sizeof(char *));
+    int results_capacity = INITIAL_SIZE;
+    int results_count = 0;
+
     /*now we perform the parallel part*/
     double start_time, end_time;
     start_time = read_timer();
     #pragma omp parallel
     {
         int id = omp_get_thread_num();
+        char resultsBuffer[WORD_LENGTH * 2]; /*temp buffer for formatting the end result string to %s -> %s format*/
+
     #pragma omp for
         for(int i = 0; i < wordCount; i++){
             char *reverseWord = reverse_string(dictionaryInArray[i]);
             char **palindromeOrSemordnilaps = (char **)bsearch(&reverseWord, dictionaryInArray, wordCount, sizeof(char *), compare_strings);
             if(palindromeOrSemordnilaps){ /*this block is entered if the above function did not return NULL (result was found)*/
-            #pragma omp critical
+                snprintf(resultsBuffer, sizeof(resultsBuffer), "%s -> %s", dictionaryInArray[i], *palindromeOrSemordnilaps); /*save %s -> %s as a string for pair to a buffer*/
+                #pragma omp critical
             {
+                if (results_count >= results_capacity) { /*dynamically allocate more memory if our array is running out of space*/
+                    results_capacity *= 2;
+                    results = realloc(results, results_capacity * sizeof(char *));
+                }
+                results[results_count] = strdup(resultsBuffer);
+                results_count++;
                 printf("Thread %d found pair: %s -> %s\n", id, dictionaryInArray[i], *palindromeOrSemordnilaps);
-                fprintf(output_file, "%s -> %s\n", dictionaryInArray[i], *palindromeOrSemordnilaps);
             }
             }
             free(reverseWord);
         }
     }
     end_time = read_timer();
+    /*saving pairs to local file palindromesOutput.txt*/
+    for (int i = 0; i < results_count; i++) {
+        fprintf(output_file, "%s\n", results[i]);
+        free(results[i]); // Free memory after writing
+    }
+
     printf("All done.\n");
     printf("Elapsed time: %f seconds \n", (end_time - start_time));
-    printf("Number of words in dictionary: %d", wordCount);
+    printf("Number of words in dictionary: %d\n", wordCount);
+    printf("Number of palindromes/semordnilapses found: %d\n", results_count);
     fclose(output_file);
 
     
@@ -119,6 +139,7 @@ int main(int argc, char *argv[]) {
         free(dictionaryInArray[i]);
     }
     free(dictionaryInArray);
+    free(results);
 
     return 0;
 }
