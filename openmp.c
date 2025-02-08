@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
     /*saving pairs to local file palindromesOutput.txt*/
     for (int i = 0; i < results_count; i++) {
         fprintf(output_file, "%s\n", results[i]);
-        free(results[i]); // Free memory after writing
+        free(results[i]);
     }
 
     printf("All done.\n");
