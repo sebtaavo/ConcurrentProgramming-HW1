@@ -67,6 +67,11 @@ void *bear_thread(void *args) {
             sem_post(&empty_slots);  // Release empty slots for bees to fill
         }
         sem_post(&mutex);  // Release the lock on the pot
+
+        if(totalHoneyTally>300){
+            printf("DONE: Bear is closing its thread too!\n");
+            break;
+        }
     }
 }
 
