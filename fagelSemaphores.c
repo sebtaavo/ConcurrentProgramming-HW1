@@ -6,10 +6,10 @@
 #define NUM_CHICKS 5
 #define MAX_NUM_WORMS 10
 
-int maskar = MAX_NUM_WORMS;
+int currentNumWorms = MAX_NUM_WORMS;
 
 sem_t availableWorms; /*counting semaphore used to count how many worms are available for the baby birds to eat*/
-sem_t mutex; /*binary semaphore used as a mutex lock on the "maskar" variable in the critical section*/
+sem_t mutex; /*binary semaphore used as a mutex lock on the "currentNumWorms" variable in the critical section*/
 sem_t empty; /*binary semaphore to signal mama bird to fetch more worms*/
 
 void *bird_thread(void *arg) {
@@ -18,7 +18,7 @@ void *bird_thread(void *arg) {
         sem_wait(&mutex); /*request critical section lock*/
         printf("Mama bird goes looking for worms\n");
         sleep(1);
-        maskar = MAX_NUM_WORMS;
+        currentNumWorms = MAX_NUM_WORMS;
         printf("Mama bird deposits %d worms.\n", MAX_NUM_WORMS);
         sem_post(&mutex); /*unlock the critical resource*/
         for (int i = 0; i < MAX_NUM_WORMS; i++) {
@@ -31,11 +31,11 @@ void *baby_bird_thread(void *arg) {
     int id = *(int *)arg;
     while (1) {
         sem_wait(&availableWorms); /*wait for there to be worms to consume.*/
-        sem_wait(&mutex); /*request critical resource lock for the "maskar" variable.*/
-        maskar--;
-        printf("Chick #%d eats a worm. Worms left: %d\n", id, maskar);
+        sem_wait(&mutex); /*request critical resource lock for the "currentNumWorms" variable.*/
+        currentNumWorms--;
+        printf("Chick #%d eats a worm. Worms left: %d\n", id, currentNumWorms);
         sleep(1);
-        if (!maskar) {
+        if (!currentNumWorms) {
             sem_post(&empty); /*if we have consumed the last worm, notify mama bird with the "empty" flag semaphore to fetch more.*/
         }
         sem_post(&mutex); /*unlock critical resource*/

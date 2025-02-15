@@ -37,6 +37,7 @@ void *bee_thread(void *args) {
         printf("Bee #%d goes to fetch some honey!\n", id);
         sem_wait(&empty_slots); /*wait for an empty slot in the pot*/
         sem_wait(&mutex); /*wait for the critical resource to be available (honey pot)*/
+        
         sleep(1); /*arbitrary, just to let bees fetch honey for some time*/
         /*protect the total tally of honey*/
         sem_wait(&tally_mutex);
